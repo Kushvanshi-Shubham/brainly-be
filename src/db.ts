@@ -3,7 +3,7 @@ import mongoose, {model , Schema } from "mongoose";
 import { MONGO_db_URL } from "./config";
 
 mongoose.connect(MONGO_db_URL)
-console.log(MONGO_db_URL)
+
 
 const UserSchema = new Schema (
     {
