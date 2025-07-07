@@ -5,12 +5,15 @@ import { MONGO_db_URL } from "./config";
 mongoose.connect(MONGO_db_URL)
 
 
-const UserSchema = new Schema (
-    {
-        username : {type: String , unique: true},
-        password : String
-    }
-)
+const UserSchema = new Schema(
+  {
+    username: { type: String, unique: true },
+    password: String,
+    
+  },
+  { timestamps: true }
+);
+
 export const UserModel = model( "User" , UserSchema);
 
 const ContentSchema = new Schema({
