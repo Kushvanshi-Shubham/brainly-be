@@ -6,7 +6,10 @@ import shareRoutes from "./routes/shareRoutes";
 import profileRoutes from "./routes/profileRoutes"; 
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: "https://brainly-fe-azb4.vercel.app",
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
