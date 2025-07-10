@@ -7,21 +7,35 @@ export const userMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
-  const header = req.headers["authorization"];
-  const decode = jwt.verify(header as string, JWT_PASS);
+ 
+  const authHeader = req.headers["authorization"];
 
-  if (decode) {
-    if (typeof decode === "string") {
-      res.status(403).json({
-        message: "You are not logged in!",
-      });
-      return;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      message: "Authorization token is missing or malformed",
+    });
+  }
+
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+// @ts-ignore
+    const decodedPayload = jwt.verify(token, JWT_PASS);
+
+    
+    if (typeof decodedPayload === "string" || !decodedPayload.id) {
+       return res.status(401).json({ message: "Invalid token payload" });
     }
-    req.userId = (decode as JwtPayload).id;
-    next();
-  } else {
-    res.status(403).json({
-      message: "You are not logged in",
+
+
+    req.userId = decodedPayload.id;
+    next(); 
+  } catch (error) {
+   
+    return res.status(401).json({
+      message: "Your session is not valid. Please log in again.",
     });
   }
 };

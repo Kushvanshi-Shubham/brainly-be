@@ -1,12 +1,13 @@
-export function random(len: number) {
-    let options = "asdfghjklzxcvbnmqwertyuiop147852369";
-    let length = options.length;
+export function random(len: number): string {
 
-    let ans = "";
+  const options = "abcdefghijklmnopqrstuvwxyz0123456789";
+  const optionsLength = options.length;
 
-    for (let i = 0; i < len; i++) {
-        ans += options[Math.floor((Math.random() * length))] // 0 => 20
-    }
+  let ans = "";
 
-    return ans;
+  for (let i = 0; i < len; i++) {
+    ans += options.charAt(Math.floor(Math.random() * optionsLength));
+  }
+
+  return ans;
 }
