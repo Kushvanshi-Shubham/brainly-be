@@ -15,7 +15,7 @@ const startServer = async () => {
  
     const app = express();
     app.use(cors({
-      origin: ["http://localhost:5173", "https://brainly-fe-azb4.vercel.app"],
+      origin: ["http://localhost:5173", "https://brainly-fe-coral.vercel.app"],
       credentials: true,
     }));
     app.use(express.json());
