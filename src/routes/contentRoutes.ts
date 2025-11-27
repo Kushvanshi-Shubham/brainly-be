@@ -11,29 +11,25 @@ interface AuthenticatedRequest extends Request {
   userId?: string;
 }
 
-
-// @ts-ignore
 const contentSchema = z.object({
-  title: z.string().min(1, "Title cannot be empty"),
-  link: z.string().url("Must be a valid URL"),
-  
+  title: z.string().min(1),
+  link: z.string().url({ message: "Invalid URL format" }),
   type: z.enum(['article', 'video', 'resource', 'other', 'youtube', 'twitter']),
   tags: z.array(z.string().trim().toLowerCase()).optional(),
 });
 
-// @ts-ignore
+// @ts-expect-error - Express v5 middleware types work correctly at runtime
 router.post("/content", userMiddleware, async (req: AuthenticatedRequest, res) => {
   const parseResult = contentSchema.safeParse(req.body);
   if (!parseResult.success) {
- 
-    return res.status(400).json({ message: "Invalid input", errors: parseResult.error.flatten().fieldErrors });
+    return res.status(400).json({ message: "Invalid input", errors: parseResult.error.issues });
   }
 
   const { title, link, type, tags = [] } = parseResult.data;
 
   try {
     const tagIds = await Promise.all(
-      tags.map(async (tagName) => {
+      tags.map(async (tagName: string) => {
         const tag = await TagModel.findOneAndUpdate(
           { name: tagName },
           { $setOnInsert: { name: tagName } },
@@ -51,32 +47,51 @@ router.post("/content", userMiddleware, async (req: AuthenticatedRequest, res) =
       tags: tagIds,
     });
 
-    res.status(201).json({ message: "Content added successfully", content: newContent });
+    return res.status(201).json({ message: "Content added successfully", content: newContent });
 
   } catch (error) {
     console.error("Add Content Error:", error);
-    res.status(500).json({ message: "An internal server error occurred" });
+    return res.status(500).json({ message: "An internal server error occurred" });
   }
 });
 
-
-// @ts-ignore
+// @ts-expect-error - Express v5 middleware types work correctly at runtime
 router.get("/content", userMiddleware, async (req: AuthenticatedRequest, res) => {
   try {
-    const content = await ContentModel.find({ userId: req.userId })
-      .populate("userId", "username")
-      .populate("tags", "name")
-      .sort({ createdAt: -1 });
+    // Pagination parameters
+    const page = Number.parseInt(req.query.page as string) || 1;
+    const limit = Number.parseInt(req.query.limit as string) || 20;
+    const skip = (page - 1) * limit;
 
-    res.json({ content });
+    // Get total count for pagination metadata
+    const total = await ContentModel.countDocuments({ userId: req.userId });
+
+    const content = await ContentModel.find({ userId: req.userId })
+      .populate("userId", "username profilePic")
+      .populate("tags", "name")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(); // Optimize: return plain JavaScript objects
+
+    return res.json({
+      content,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1,
+      },
+    });
   } catch (error) {
     console.error("Get Content Error:", error);
-    res.status(500).json({ message: "An internal server error occurred" });
+    return res.status(500).json({ message: "An internal server error occurred" });
   }
 });
 
-
-// @ts-ignore
+// @ts-expect-error - Express v5 middleware types work correctly at runtime
 router.delete("/content/:id", userMiddleware, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
 
@@ -94,10 +109,10 @@ router.delete("/content/:id", userMiddleware, async (req: AuthenticatedRequest, 
       return res.status(404).json({ message: "Content not found or you do not have permission to delete it" });
     }
 
-    res.json({ message: "Content deleted successfully" });
+    return res.json({ message: "Content deleted successfully" });
   } catch (error) {
     console.error("Delete Content Error:", error);
-    res.status(500).json({ message: "An internal server error occurred" });
+    return res.status(500).json({ message: "An internal server error occurred" });
   }
 });
 

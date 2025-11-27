@@ -1,5 +1,5 @@
 import { NextFunction, Response, Request } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { JWT_PASS } from "./config";
 
 export const userMiddleware = (
@@ -7,33 +7,27 @@ export const userMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
- 
   const authHeader = req.headers["authorization"];
 
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({
       message: "Authorization token is missing or malformed",
     });
   }
 
-
   const token = authHeader.split(' ')[1];
 
   try {
-// @ts-ignore
-    const decodedPayload = jwt.verify(token, JWT_PASS);
+    const decodedPayload = jwt.verify(token, JWT_PASS as string);
 
-    
     if (typeof decodedPayload === "string" || !decodedPayload.id) {
        return res.status(401).json({ message: "Invalid token payload" });
     }
 
-
     req.userId = decodedPayload.id;
     next(); 
   } catch (error) {
-   
+    console.error("Token verification failed:", error);
     return res.status(401).json({
       message: "Your session is not valid. Please log in again.",
     });

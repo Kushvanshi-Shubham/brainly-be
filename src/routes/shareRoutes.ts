@@ -8,23 +8,14 @@ const router = express.Router();
 
 
 const shareToggleSchema = z.object({
-  share: z.boolean({
-    // @ts-ignore
-    invalid_type_error: "The 'share' property must be a boolean.",
-  }),
-}).refine(data => data.share !== undefined, {
-    message: "The 'share' boolean property is required",
-    path: ["share"], 
+  share: z.boolean(),
 });
 
-
-
-// @ts-ignore
+// @ts-expect-error - Express v5 middleware types work correctly at runtime
 router.post("/brain/share", userMiddleware, async (req, res) => {
-
   const parseResult = shareToggleSchema.safeParse(req.body);
   if (!parseResult.success) {
-    return res.status(400).json({ message: "Invalid input", errors: parseResult.error.flatten().fieldErrors });
+    return res.status(400).json({ message: "Invalid input", errors: parseResult.error.issues });
   }
 
   const { share } = parseResult.data;
@@ -63,8 +54,7 @@ router.post("/brain/share", userMiddleware, async (req, res) => {
   }
 });
 
-
-// @ts-ignore
+// @ts-expect-error - Express v5 route handler types work correctly at runtime
 router.get("/brain/:shareLink", async (req: Request, res: Response) => {
   const { shareLink } = req.params;
 

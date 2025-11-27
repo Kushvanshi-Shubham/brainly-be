@@ -16,11 +16,37 @@ router.get("/profile", userMiddleware, async (req: AuthenticatedRequest, res: Re
     const userId = req.userId;
 
    
-    const [user, contentCount] = await Promise.all([
+    const [user, contentCount, typeBreakdown, recentContent, tagStats] = await Promise.all([
    
       UserModel.findById(userId).select('-password'),
   
-      ContentModel.countDocuments({ userId: userId })
+      ContentModel.countDocuments({ userId: userId }),
+      
+      // Type breakdown
+      ContentModel.aggregate([
+        { $match: { userId: userId } },
+        { $group: { _id: "$type", count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]),
+      
+      // Recent activity (last 10 items)
+      ContentModel.find({ userId: userId })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .select('title type createdAt')
+        .lean(),
+      
+      // Tag statistics
+      ContentModel.aggregate([
+        { $match: { userId: userId } },
+        { $unwind: "$tags" },
+        { $group: { _id: "$tags", count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 10 },
+        { $lookup: { from: 'tags', localField: '_id', foreignField: '_id', as: 'tagDetails' } },
+        { $unwind: "$tagDetails" },
+        { $project: { name: "$tagDetails.name", count: 1 } }
+      ])
     ]);
 
     
@@ -28,14 +54,62 @@ router.get("/profile", userMiddleware, async (req: AuthenticatedRequest, res: Re
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Calculate total unique tags
+    const totalTags = tagStats.length;
 
     res.json({
       username: user.username,
+      email: user.email,
+      profilePic: user.profilePic || "",
+      bio: user.bio || "",
       joinedAt: user.createdAt, 
       contentCount,
+      typeBreakdown,
+      recentActivity: recentContent,
+      topTags: tagStats,
+      totalTags
     });
   } catch (err) {
     console.error("Get Profile Error:", err);
+    res.status(500).json({ message: "An internal server error occurred" });
+  }
+});
+
+// @ts-ignore
+router.put("/profile", userMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    const { profilePic, bio } = req.body;
+
+    const updateData: { profilePic?: string; bio?: string } = {};
+    
+    if (profilePic !== undefined) {
+      updateData.profilePic = profilePic;
+    }
+    
+    if (bio !== undefined) {
+      updateData.bio = bio;
+    }
+
+    const user = await UserModel.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, select: '-password' }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "Profile updated successfully",
+      username: user.username,
+      email: user.email,
+      profilePic: user.profilePic || "",
+      bio: user.bio || ""
+    });
+  } catch (err) {
+    console.error("Update Profile Error:", err);
     res.status(500).json({ message: "An internal server error occurred" });
   }
 });

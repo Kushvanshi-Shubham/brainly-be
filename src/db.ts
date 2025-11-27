@@ -1,10 +1,9 @@
-import mongoose, { model, Schema, Document } from "mongoose";
+import mongoose, { model, Schema } from "mongoose";
 import { MONGO_db_URL } from "./config";
 
 export const connectDB = async () => {
   try {
-    // @ts-ignore
-    await mongoose.connect(MONGO_db_URL);
+    await mongoose.connect(MONGO_db_URL as string);
     console.log("MongoDB connected successfully.");
   } catch (error) {
     console.error("MongoDB connection failed:", error);
@@ -16,15 +15,32 @@ const UserSchema = new Schema(
   {
     username: {
       type: String,
+      required: [true, "Username is required"],
+      trim: true,
+      minlength: [3, "Username must be at least 3 characters"]
+    },
+    email: {
+      type: String,
       unique: true,
-      required: [true, "Username (email) is required"],
-      trim: true
+      required: [true, "Email is required"],
+      trim: true,
+      lowercase: true,
+      index: true
     },
     password: {
       type: String,
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters long"]
     },
+    profilePic: {
+      type: String,
+      default: ""
+    },
+    bio: {
+      type: String,
+      default: "",
+      maxlength: [500, "Bio cannot exceed 500 characters"]
+    }
   },
   { timestamps: true }
 );
@@ -57,7 +73,8 @@ const ContentSchema = new Schema({
   type: {
     type: String,
     required: [true, "Content type is required"],
-        enum: ['article', 'video', 'resource', 'other', 'youtube', 'twitter']
+        enum: ['article', 'video', 'resource', 'other', 'youtube', 'twitter'],
+    index: true  // Index for type-based queries
   },
   tags: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -69,7 +86,15 @@ const ContentSchema = new Schema({
     required: true,
     index: true
   }
+}, { 
+  timestamps: true  // Add createdAt and updatedAt
 });
+
+// Compound indexes for common query patterns
+ContentSchema.index({ userId: 1, createdAt: -1 }); // Feed queries
+ContentSchema.index({ userId: 1, type: 1 }); // Type filtering
+ContentSchema.index({ tags: 1, userId: 1 }); // Tag filtering
+ContentSchema.index({ createdAt: -1 }); // Timeline queries
 
 export const ContentModel = model("Content", ContentSchema);
 
