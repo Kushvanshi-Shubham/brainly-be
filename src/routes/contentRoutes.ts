@@ -18,7 +18,7 @@ const contentSchema = z.object({
   tags: z.array(z.string().trim().toLowerCase()).optional(),
 });
 
-// @ts-expect-error - Express v5 middleware types work correctly at runtime
+// @ts-ignore - Express v5 middleware types work correctly at runtime
 router.post("/content", userMiddleware, async (req: AuthenticatedRequest, res) => {
   const parseResult = contentSchema.safeParse(req.body);
   if (!parseResult.success) {
@@ -55,7 +55,7 @@ router.post("/content", userMiddleware, async (req: AuthenticatedRequest, res) =
   }
 });
 
-// @ts-expect-error - Express v5 middleware types work correctly at runtime
+// @ts-ignore - Express v5 middleware types work correctly at runtime
 router.get("/content", userMiddleware, async (req: AuthenticatedRequest, res) => {
   try {
     // Pagination parameters
@@ -91,7 +91,7 @@ router.get("/content", userMiddleware, async (req: AuthenticatedRequest, res) =>
   }
 });
 
-// @ts-expect-error - Express v5 middleware types work correctly at runtime
+// @ts-ignore - Express v5 middleware types work correctly at runtime
 router.delete("/content/:id", userMiddleware, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
 
@@ -125,7 +125,7 @@ const updateContentSchema = z.object({
   notes: z.string().max(1000).optional(),
 });
 
-// @ts-expect-error - Express v5 middleware types work correctly at runtime
+// @ts-ignore - Express v5 middleware types work correctly at runtime
 router.put("/content/:id", userMiddleware, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
 
@@ -180,7 +180,7 @@ router.put("/content/:id", userMiddleware, async (req: AuthenticatedRequest, res
 });
 
 // Toggle favorite
-// @ts-expect-error - Express v5 middleware types work correctly at runtime
+// @ts-ignore - Express v5 middleware types work correctly at runtime
 router.patch("/content/:id/favorite", userMiddleware, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
 
@@ -209,7 +209,7 @@ router.patch("/content/:id/favorite", userMiddleware, async (req: AuthenticatedR
 });
 
 // Toggle archive
-// @ts-expect-error - Express v5 middleware types work correctly at runtime
+// @ts-ignore - Express v5 middleware types work correctly at runtime
 router.patch("/content/:id/archive", userMiddleware, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
 

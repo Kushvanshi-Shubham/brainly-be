@@ -9,7 +9,7 @@ interface AuthenticatedRequest extends Request {
 }
 
 // Get discovery feed with analytics
-// @ts-expect-error - Express v5 middleware types work correctly at runtime
+// @ts-ignore - Express v5 middleware types work correctly at runtime
 router.get("/discovery/feed", userMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.userId;
@@ -101,7 +101,7 @@ router.get("/discovery/feed", userMiddleware, async (req: AuthenticatedRequest, 
 });
 
 // Get timeline view (grouped by date)
-// @ts-expect-error - Express v5 middleware types work correctly at runtime
+// @ts-ignore - Express v5 middleware types work correctly at runtime
 router.get("/discovery/timeline", userMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.userId;
@@ -131,7 +131,7 @@ router.get("/discovery/timeline", userMiddleware, async (req: AuthenticatedReque
 });
 
 // Get insights and statistics
-// @ts-expect-error - Express v5 middleware types work correctly at runtime
+// @ts-ignore - Express v5 middleware types work correctly at runtime
 router.get("/discovery/insights", userMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.userId;

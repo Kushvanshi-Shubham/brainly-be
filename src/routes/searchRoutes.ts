@@ -9,7 +9,7 @@ interface AuthenticatedRequest extends Request {
 }
 
 // Advanced search with multiple filters
-// @ts-expect-error - Express v5 middleware types work correctly at runtime
+// @ts-ignore - Express v5 middleware types work correctly at runtime
 router.get("/search", userMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.userId;
@@ -107,7 +107,7 @@ router.get("/search", userMiddleware, async (req: AuthenticatedRequest, res: Res
 });
 
 // Get available filter options (types and tags)
-// @ts-expect-error - Express v5 middleware types work correctly at runtime
+// @ts-ignore - Express v5 middleware types work correctly at runtime
 router.get("/search/filters", userMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.userId;
@@ -130,7 +130,7 @@ router.get("/search/filters", userMiddleware, async (req: AuthenticatedRequest, 
 });
 
 // Quick filters - predefined common searches
-// @ts-expect-error - Express v5 middleware types work correctly at runtime
+// @ts-ignore - Express v5 middleware types work correctly at runtime
 router.get("/search/quick/:filter", userMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.userId;

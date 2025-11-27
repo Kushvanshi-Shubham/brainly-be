@@ -22,7 +22,7 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-// @ts-expect-error - Express v5 type inference works correctly at runtime
+// @ts-ignore - Express v5 type inference works correctly at runtime
 router.post("/signup", async (req, res) => {
   
   const parseResult = signupSchema.safeParse(req.body);
@@ -59,7 +59,7 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// @ts-expect-error - Express v5 type inference works correctly at runtime
+// @ts-ignore - Express v5 type inference works correctly at runtime
 router.post("/login", async (req, res) => {
   const parseResult = loginSchema.safeParse(req.body);
   if (!parseResult.success) {

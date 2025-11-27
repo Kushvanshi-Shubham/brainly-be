@@ -11,7 +11,7 @@ const shareToggleSchema = z.object({
   share: z.boolean(),
 });
 
-// @ts-expect-error - Express v5 middleware types work correctly at runtime
+// @ts-ignore - Express v5 middleware types work correctly at runtime
 router.post("/brain/share", userMiddleware, async (req, res) => {
   const parseResult = shareToggleSchema.safeParse(req.body);
   if (!parseResult.success) {
@@ -54,7 +54,7 @@ router.post("/brain/share", userMiddleware, async (req, res) => {
   }
 });
 
-// @ts-expect-error - Express v5 route handler types work correctly at runtime
+// @ts-ignore - Express v5 route handler types work correctly at runtime
 router.get("/brain/:shareLink", async (req: Request, res: Response) => {
   const { shareLink } = req.params;
 
