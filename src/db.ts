@@ -73,7 +73,7 @@ const ContentSchema = new Schema({
   type: {
     type: String,
     required: [true, "Content type is required"],
-        enum: ['article', 'video', 'resource', 'other', 'youtube', 'twitter'],
+        enum: ['article', 'video', 'resource', 'other', 'youtube', 'twitter', 'instagram', 'tiktok', 'linkedin', 'reddit', 'medium', 'github', 'codepen', 'spotify', 'soundcloud', 'vimeo', 'twitch', 'facebook', 'pinterest'],
     index: true  // Index for type-based queries
   },
   tags: [{
@@ -85,6 +85,21 @@ const ContentSchema = new Schema({
     ref: 'User',
     required: true,
     index: true
+  },
+  isFavorite: {
+    type: Boolean,
+    default: false,
+    index: true  // Index for favorite filtering
+  },
+  isArchived: {
+    type: Boolean,
+    default: false,
+    index: true  // Index for archive filtering
+  },
+  notes: {
+    type: String,
+    default: "",
+    maxlength: [1000, "Notes cannot exceed 1000 characters"]
   }
 }, { 
   timestamps: true  // Add createdAt and updatedAt
@@ -95,6 +110,8 @@ ContentSchema.index({ userId: 1, createdAt: -1 }); // Feed queries
 ContentSchema.index({ userId: 1, type: 1 }); // Type filtering
 ContentSchema.index({ tags: 1, userId: 1 }); // Tag filtering
 ContentSchema.index({ createdAt: -1 }); // Timeline queries
+ContentSchema.index({ userId: 1, isFavorite: 1 }); // Favorite filtering
+ContentSchema.index({ userId: 1, isArchived: 1 }); // Archive filtering
 
 export const ContentModel = model("Content", ContentSchema);
 

@@ -20,8 +20,35 @@ const startServer = async () => {
 
     const app = express();
     
-    // Security middleware
-    app.use(helmet());
+    // Security middleware with relaxed CSP for embed support
+    app.use(helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            "'unsafe-inline'", // Required for Twitter/Instagram embeds
+            "https://platform.twitter.com",
+            "https://www.instagram.com",
+            "https://connect.facebook.net"
+          ],
+          frameSrc: [
+            "'self'",
+            "https://www.youtube.com",
+            "https://platform.twitter.com",
+            "https://www.instagram.com",
+            "https://open.spotify.com",
+            "https://player.vimeo.com",
+            "https://www.tiktok.com",
+            "https://codepen.io",
+            "https://w.soundcloud.com",
+            "https://player.twitch.tv"
+          ],
+          imgSrc: ["'self'", "data:", "https:", "http:"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+        },
+      },
+    }));
     
     // Rate limiting
     const limiter = rateLimit({
