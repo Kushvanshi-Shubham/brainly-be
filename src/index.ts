@@ -67,10 +67,29 @@ const startServer = async () => {
     
     app.use("/api/v1", limiter);
     
+    // CORS configuration - allow Vercel frontend
+    const allowedOrigins = [
+      FRONTEND_URL,
+      "https://brainly-fe-coral.vercel.app",
+      "http://localhost:5173", // Local development
+    ];
+
     app.use(cors({
-      origin: [FRONTEND_URL, "https://brainly-fe-coral.vercel.app"],
+      origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, Postman, etc.)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
     }));
+    
     app.use(express.json());
 
  
