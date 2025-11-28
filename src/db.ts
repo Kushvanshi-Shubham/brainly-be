@@ -40,7 +40,15 @@ const UserSchema = new Schema(
       type: String,
       default: "",
       maxlength: [500, "Bio cannot exceed 500 characters"]
-    }
+    },
+    followers: [{
+      type: Schema.Types.ObjectId,
+      ref: "User"
+    }],
+    following: [{
+      type: Schema.Types.ObjectId,
+      ref: "User"
+    }]
   },
   { timestamps: true }
 );

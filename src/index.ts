@@ -9,6 +9,7 @@ import shareRoutes from "./routes/shareRoutes";
 import profileRoutes from "./routes/profileRoutes";
 import discoveryRoutes from "./routes/discoveryRoutes";
 import searchRoutes from "./routes/searchRoutes";
+import followRoutes from "./routes/followRoutes";
 import { errorHandler, notFoundHandler } from "./errorHandler";
 import { PORT, FRONTEND_URL, NODE_ENV } from "./config";
 
@@ -107,6 +108,7 @@ const startServer = async () => {
     app.use("/api/v1", profileRoutes);
     app.use("/api/v1", discoveryRoutes);
     app.use("/api/v1", searchRoutes);
+    app.use("/api/v1", followRoutes);
 
     // Handle 404 errors
     app.use(notFoundHandler);
