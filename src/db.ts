@@ -3,8 +3,39 @@ import { MONGO_db_URL } from "./config";
 
 export const connectDB = async () => {
   try {
-    await mongoose.connect(MONGO_db_URL as string);
+    await mongoose.connect(MONGO_db_URL as string, {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 50,
+      minPoolSize: 5,
+      maxIdleTimeMS: 10000,
+      retryWrites: true,
+      retryReads: true,
+    });
     console.log("MongoDB connected successfully.");
+
+    // Log connection pool stats periodically
+    setInterval(() => {
+      console.log('MongoDB connection status:', {
+        connected: mongoose.connection.readyState === 1,
+        readyState: mongoose.connection.readyState,
+        name: mongoose.connection.name
+      });
+    }, 60000); // Every 60 seconds
+
+    // Monitor connection events
+    mongoose.connection.on('disconnected', () => {
+      console.error('MongoDB disconnected! Attempting to reconnect...');
+    });
+
+    mongoose.connection.on('error', (err) => {
+      console.error('MongoDB connection error:', err);
+    });
+
+    mongoose.connection.on('reconnected', () => {
+      console.log('MongoDB reconnected successfully.');
+    });
+
   } catch (error) {
     console.error("MongoDB connection failed:", error);
     process.exit(1);
@@ -139,3 +170,88 @@ const LinkSchema = new Schema({
 });
 
 export const LinkModel = model("Links", LinkSchema);
+
+const NotificationSchema = new Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true
+  },
+  type: {
+    type: String,
+    required: true,
+    enum: ['follow', 'content'],
+    index: true
+  },
+  actorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  contentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Content'
+  },
+  message: {
+    type: String,
+    required: true
+  },
+  isRead: {
+    type: Boolean,
+    default: false,
+    index: true
+  }
+}, { timestamps: true });
+
+// Compound index for querying user's unread notifications
+NotificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 });
+
+export const NotificationModel = model("Notification", NotificationSchema);
+
+const CollectionSchema = new Schema({
+  name: {
+    type: String,
+    required: [true, "Collection name is required"],
+    trim: true,
+    maxlength: [100, "Collection name cannot exceed 100 characters"]
+  },
+  description: {
+    type: String,
+    default: "",
+    maxlength: [500, "Description cannot exceed 500 characters"]
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true
+  },
+  color: {
+    type: String,
+    default: "#8B5CF6", // Default purple
+    match: [/^#[0-9A-F]{6}$/i, "Color must be a valid hex color"]
+  },
+  icon: {
+    type: String,
+    default: "📁"
+  },
+  contentIds: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Content'
+  }],
+  isPrivate: {
+    type: Boolean,
+    default: false
+  },
+  order: {
+    type: Number,
+    default: 0
+  }
+}, { timestamps: true });
+
+// Compound indexes for queries
+CollectionSchema.index({ userId: 1, order: 1 }); // User's collections ordered
+CollectionSchema.index({ userId: 1, createdAt: -1 }); // Recent collections
+
+export const CollectionModel = model("Collection", CollectionSchema);

@@ -27,9 +27,15 @@ export const userMiddleware = (
     req.userId = decodedPayload.id;
     next(); 
   } catch (error) {
-    console.error("Token verification failed:", error);
+    // Don't log expected auth failures, only unexpected errors
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({
+        message: "Your session is not valid. Please log in again.",
+      });
+    }
+    console.error("Unexpected token verification error:", error);
     return res.status(401).json({
-      message: "Your session is not valid. Please log in again.",
+      message: "Authentication failed.",
     });
   }
 };

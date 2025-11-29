@@ -1,14 +1,14 @@
 import { Router, Request, Response } from "express";
-import { UserModel } from "../db";
-import { authMiddleware } from "../middleware";
+import { UserModel, NotificationModel } from "../db";
+import { userMiddleware } from "../middleware";
 
 const router = Router();
 
 // Follow a user
-router.post("/follow/:userId", authMiddleware, async (req: Request, res: Response) => {
+// @ts-ignore - Express v5 middleware types work correctly at runtime
+router.post("/follow/:userId", userMiddleware, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    //@ts-expect-error - userId is set by authMiddleware
     const currentUserId = req.userId;
 
     // Can't follow yourself
@@ -46,6 +46,14 @@ router.post("/follow/:userId", authMiddleware, async (req: Request, res: Respons
       $addToSet: { followers: currentUserId }
     });
 
+    // Create notification for the followed user
+    await NotificationModel.create({
+      userId: userId,
+      type: 'follow',
+      actorId: currentUserId,
+      message: `${currentUser.username} started following you`
+    });
+
     res.status(200).json({ 
       message: "Successfully followed user",
       userId: userId
@@ -57,10 +65,10 @@ router.post("/follow/:userId", authMiddleware, async (req: Request, res: Respons
 });
 
 // Unfollow a user
-router.post("/unfollow/:userId", authMiddleware, async (req: Request, res: Response) => {
+// @ts-ignore - Express v5 middleware types work correctly at runtime
+router.post("/unfollow/:userId", userMiddleware, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    //@ts-expect-error - userId is set by authMiddleware
     const currentUserId = req.userId;
 
     // Can't unfollow yourself
@@ -90,7 +98,8 @@ router.post("/unfollow/:userId", authMiddleware, async (req: Request, res: Respo
 });
 
 // Get followers list
-router.get("/followers/:userId", authMiddleware, async (req: Request, res: Response) => {
+// @ts-ignore - Express v5 middleware types work correctly at runtime
+router.get("/followers/:userId", userMiddleware, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
 
@@ -114,7 +123,8 @@ router.get("/followers/:userId", authMiddleware, async (req: Request, res: Respo
 });
 
 // Get following list
-router.get("/following/:userId", authMiddleware, async (req: Request, res: Response) => {
+// @ts-ignore - Express v5 middleware types work correctly at runtime
+router.get("/following/:userId", userMiddleware, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
 
@@ -138,10 +148,10 @@ router.get("/following/:userId", authMiddleware, async (req: Request, res: Respo
 });
 
 // Check if current user is following target user
-router.get("/is-following/:userId", authMiddleware, async (req: Request, res: Response) => {
+// @ts-ignore - Express v5 middleware types work correctly at runtime
+router.get("/is-following/:userId", userMiddleware, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    //@ts-expect-error - userId is set by authMiddleware
     const currentUserId = req.userId;
 
     const currentUser = await UserModel.findById(currentUserId).select("following");

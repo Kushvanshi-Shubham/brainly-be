@@ -1,6 +1,22 @@
 import express, { Request, Response } from "express";
 import { ContentModel, TagModel } from "../db";
 import { userMiddleware } from "../middleware";
+import { Types } from "mongoose";
+
+interface SearchQuery {
+  userId: Types.ObjectId;
+  title?: { $regex: string; $options: string };
+  type?: string | { $in: string[] };
+  tags?: { $in: Types.ObjectId[] } | { $size: number } | Types.ObjectId[];
+  createdAt?: {
+    $gte?: Date;
+    $lte?: Date;
+  };
+}
+
+interface SortOption {
+  [key: string]: 1 | -1;
+}
 
 const router = express.Router();
 
@@ -24,8 +40,8 @@ router.get("/search", userMiddleware, async (req: AuthenticatedRequest, res: Res
       limit = 20
     } = req.query;
 
-    // Build MongoDB query
-    const searchQuery: any = { userId };
+    // Build MongoDB query with proper typing
+    const searchQuery: SearchQuery = { userId: new Types.ObjectId(userId) };
 
     // Text search in title
     if (query && typeof query === 'string') {
@@ -59,8 +75,8 @@ router.get("/search", userMiddleware, async (req: AuthenticatedRequest, res: Res
       }
     }
 
-    // Determine sort order
-    let sortOption: any = { createdAt: -1 }; // Default: newest first
+    // Determine sort order with proper typing
+    let sortOption: SortOption = { createdAt: -1 }; // Default: newest first
     if (sortBy === 'oldest') {
       sortOption = { createdAt: 1 };
     } else if (sortBy === 'title') {
@@ -141,8 +157,8 @@ router.get("/search/quick/:filter", userMiddleware, async (req: AuthenticatedReq
     const limitNum = Number.parseInt(limit as string);
     const skip = (pageNum - 1) * limitNum;
 
-    let searchQuery: any = { userId };
-    let sortOption: any = { createdAt: -1 };
+    let searchQuery: SearchQuery = { userId: new Types.ObjectId(userId) };
+    let sortOption: SortOption = { createdAt: -1 };
 
     switch (filter) {
       case 'recent':

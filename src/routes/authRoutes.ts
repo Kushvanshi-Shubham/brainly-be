@@ -14,7 +14,12 @@ const router = express.Router();
 const signupSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email({ message: "Invalid email format" }),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string()
+    .min(12, "Password must be at least 12 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/\d/, "Password must contain at least one number")
+    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
 });
 
 const loginSchema = z.object({
@@ -22,7 +27,7 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-// @ts-ignore - Express v5 type inference works correctly at runtime
+// @ts-ignore - Express v5 async handler types are compatible at runtime
 router.post("/signup", async (req, res) => {
   
   const parseResult = signupSchema.safeParse(req.body);
@@ -33,15 +38,8 @@ router.post("/signup", async (req, res) => {
   const { username, email, password } = parseResult.data;
 
   try {
-
-    const existingUser = await UserModel.findOne({ email });
-    if (existingUser) {
-
-      return res.status(409).json({ message: "A user with this email already exists" });
-    }
-
-
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash password with 12 rounds (OWASP recommendation 2025)
+    const hashedPassword = await bcrypt.hash(password, 12);
 
 
     const user = await UserModel.create({
@@ -53,13 +51,18 @@ router.post("/signup", async (req, res) => {
 
     return res.status(201).json({ message: "User created successfully", token });
 
-  } catch (error) {
-    console.error("Signup Error:", error); 
+  } catch (error: any) {
+    // Handle duplicate key error (MongoDB unique index violation)
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "A user with this email already exists" });
+    }
+    // Don't log sensitive data
+    console.error("Signup Error:", { message: error.message });
     return res.status(500).json({ message: "An internal server error occurred" });
   }
 });
 
-// @ts-ignore - Express v5 type inference works correctly at runtime
+// @ts-ignore - Express v5 async handler types are compatible at runtime
 router.post("/login", async (req, res) => {
   const parseResult = loginSchema.safeParse(req.body);
   if (!parseResult.success) {
@@ -82,6 +85,7 @@ router.post("/login", async (req, res) => {
     }
 
 
+    // Compare password with stored hash
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
       return res.status(401).json({ message: "Invalid username/email or password" });
@@ -91,8 +95,9 @@ router.post("/login", async (req, res) => {
 
     return res.json({ token });
 
-  } catch (error) {
-    console.error("Login Error:", error);
+  } catch (error: any) {
+    // Don't log sensitive data (passwords, tokens)
+    console.error("Login Error:", { message: error.message });
     return res.status(500).json({ message: "An internal server error occurred" });
   }
 });
